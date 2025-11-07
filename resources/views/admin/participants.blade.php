@@ -33,7 +33,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="flex items-center">
             <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center mr-4">
@@ -41,11 +41,11 @@
             </div>
             <div>
                 <p class="text-sm text-gray-600">Male</p>
-                <h3 class="text-2xl font-bold text-gray-800">{{ $participants->where('gender', 'male')->count() }}</h3>
+                <h3 class="text-2xl font-bold text-gray-800">{{ $maleCount }}</h3>
             </div>
         </div>
     </div>
-    
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="flex items-center">
             <div class="h-12 w-12 rounded-lg bg-pink-100 flex items-center justify-center mr-4">
@@ -53,11 +53,11 @@
             </div>
             <div>
                 <p class="text-sm text-gray-600">Female</p>
-                <h3 class="text-2xl font-bold text-gray-800">{{ $participants->where('gender', 'female')->count() }}</h3>
+                <h3 class="text-2xl font-bold text-gray-800">{{ $femaleCount }}</h3>
             </div>
         </div>
     </div>
-    
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="flex items-center">
             <div class="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center mr-4">
@@ -84,6 +84,7 @@
                     </th>
                     <th class="py-4 px-4 text-left font-semibold text-sm uppercase tracking-wider">Age</th>
                     <th class="py-4 px-4 text-left font-semibold text-sm uppercase tracking-wider">Gender</th>
+                    <th class="py-4 px-4 text-left font-semibold text-sm uppercase tracking-wider">Organization</th>
                     <th class="py-4 px-4 text-left font-semibold text-sm uppercase tracking-wider">Parent/Guardian</th>
                     <th class="py-4 px-4 text-left font-semibold text-sm uppercase tracking-wider">LGA</th>
                     <th class="py-4 px-4 text-center font-semibold text-sm uppercase tracking-wider">Actions</th>
@@ -95,11 +96,13 @@
                     <td class="py-4 px-4">
                         <div class="flex items-center">
                             <div class="h-10 w-10 flex-shrink-0 mr-3">
-                                <img src="{{ asset($child->child_image_path) }}" alt="{{ $child->fullname }}" class="h-10 w-10 rounded-full object-cover border border-gray-300">
+                                <img src="{{ asset($child->child_image_path) }}" alt="{{ $child->fullname }}"
+                                    class="h-10 w-10 rounded-full object-cover border border-gray-300"
+                                    onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($child->fullname) }}&background=random'">
                             </div>
                             <div>
                                 <div class="font-medium text-gray-900">{{ $child->fullname }}</div>
-                                <div class="text-xs text-gray-500 truncate max-w-xs">{{ $child->email ?? 'No email' }}</div>
+                                <div class="text-xs text-gray-500 truncate max-w-xs">{{ $child->unique_code }}</div>
                             </div>
                         </div>
                     </td>
@@ -110,14 +113,17 @@
                     </td>
                     <td class="py-4 px-4">
                         @if(strtolower($child->gender) == 'male')
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                <i class="fas fa-mars mr-1"></i> Male
-                            </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <i class="fas fa-mars mr-1"></i> Male
+                        </span>
                         @else
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
-                                <i class="fas fa-venus mr-1"></i> Female
-                            </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
+                            <i class="fas fa-venus mr-1"></i> Female
+                        </span>
                         @endif
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="text-gray-700">{{ $child->organization ?? 'Not specified' }}</span>
                     </td>
                     <td class="py-4 px-4">
                         <div class="font-medium text-gray-900">{{ $child->parent_name }}</div>
@@ -128,18 +134,12 @@
                     </td>
                     <td class="py-4 px-4">
                         <div class="flex justify-center space-x-2">
-                            <button 
-                                @click="openModal = true; selected = {{ json_encode($child) }}" 
-                                class="text-green-700 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-colors"
-                                title="View Details">
+                          
+                            <a href="{{ route('admin.participants.details', $child->id) }}" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                                 <i class="fas fa-eye"></i>
-                            </button>
-                            <button 
-                                onclick="confirmDelete('2')" 
-                                class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                                title="Delete Participant">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                                <span class="hidden md:inline">View</span>
+                            </a>
+
                         </div>
                     </td>
                 </tr>
@@ -147,7 +147,7 @@
             </tbody>
         </table>
     </div>
-    
+
     @if($participants->isEmpty())
     <div class="text-center py-12">
         <i class="fas fa-users text-gray-300 text-5xl mb-4"></i>
@@ -161,8 +161,8 @@
 @if($participants->hasPages())
 <div class="mt-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
     <div class="text-sm text-gray-700">
-        Showing <span class="font-medium">{{ $participants->firstItem() }}</span> to 
-        <span class="font-medium">{{ $participants->lastItem() }}</span> of 
+        Showing <span class="font-medium">{{ $participants->firstItem() }}</span> to
+        <span class="font-medium">{{ $participants->lastItem() }}</span> of
         <span class="font-medium">{{ $participants->total() }}</span> participants
     </div>
     <div class="bg-white px-4 py-3 rounded-lg shadow-sm border border-gray-200">
@@ -170,96 +170,6 @@
     </div>
 </div>
 @endif
-
-<!-- View Modal -->
-<div x-data="{
-    openModal: false,
-    selected: {},
-    closeModal() {
-        this.openModal = false;
-        this.selected = {};
-    }
-}" x-cloak>
-    <div x-show="openModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Background overlay -->
-            <div x-show="openModal" 
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
-                 aria-hidden="true"
-                 @click="closeModal()"></div>
-
-            <!-- Modal panel -->
-            <div x-show="openModal"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <i class="fas fa-user text-green-600"></i>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title" x-text="selected.fullname || 'Participant Details'"></h3>
-                            <div class="mt-4">
-                                <div class="flex flex-col items-center mb-6">
-                                    <img :src="selected.child_image_path" :alt="selected.fullname" class="h-32 w-32 rounded-full object-cover border-4 border-green-100 shadow-sm">
-                                </div>
-                                
-                                <div class="grid grid-cols-1 gap-4">
-                                    <div class="flex justify-between border-b pb-2">
-                                        <span class="font-medium text-gray-500">Full Name:</span>
-                                        <span class="text-gray-900" x-text="selected.fullname"></span>
-                                    </div>
-                                    <div class="flex justify-between border-b pb-2">
-                                        <span class="font-medium text-gray-500">Age:</span>
-                                        <span class="text-gray-900" x-text="selected.age + ' years'"></span>
-                                    </div>
-                                    <div class="flex justify-between border-b pb-2">
-                                        <span class="font-medium text-gray-500">Gender:</span>
-                                        <span class="text-gray-900 capitalize" x-text="selected.gender"></span>
-                                    </div>
-                                    <div class="flex justify-between border-b pb-2">
-                                        <span class="font-medium text-gray-500">Parent/Guardian:</span>
-                                        <span class="text-gray-900" x-text="selected.parent_name"></span>
-                                    </div>
-                                    <div class="flex justify-between border-b pb-2">
-                                        <span class="font-medium text-gray-500">LGA:</span>
-                                        <span class="text-gray-900" x-text="selected.lga || 'Not specified'"></span>
-                                    </div>
-                                    <div class="flex justify-between border-b pb-2" x-show="selected.email">
-                                        <span class="font-medium text-gray-500">Email:</span>
-                                        <span class="text-gray-900" x-text="selected.email"></span>
-                                    </div>
-                                    <div class="flex justify-between border-b pb-2" x-show="selected.parent_phone">
-                                        <span class="font-medium text-gray-500">Parent Phone:</span>
-                                        <span class="text-gray-900" x-text="selected.parent_phone"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" 
-                            @click="closeModal()" 
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-700 text-base font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
@@ -288,20 +198,20 @@
 
 <script>
     let deleteUrl = '';
-    
+
     function confirmDelete(url) {
         deleteUrl = url;
         const modal = document.getElementById('deleteModal');
         modal.classList.remove('hidden');
-        
+
         document.getElementById('deleteConfirm').onclick = function() {
             window.location.href = deleteUrl;
         };
-        
+
         document.getElementById('deleteCancel').onclick = function() {
             modal.classList.add('hidden');
         };
-        
+
         // Close modal when clicking outside
         window.onclick = function(event) {
             if (event.target === modal) {
@@ -309,7 +219,7 @@
             }
         };
     }
-    
+
     // Close modal with Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
@@ -317,8 +227,4 @@
         }
     });
 </script>
-
-<style>
-    [x-cloak] { display: none !important; }
-</style>
 @endsection

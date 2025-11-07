@@ -21,6 +21,7 @@ class ChildRegistration extends Model
         'birth_certificate_path',
         'parent_name',
         'parent_phone',
+        'stage',
         'lga',
         'interest_area',
     ];

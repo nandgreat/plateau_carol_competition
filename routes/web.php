@@ -28,15 +28,17 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['au
 // Public routes
 Route::get('/register-child', [ChildRegistrationController::class, 'create'])->name('register.child');
 Route::post('/register-child', [ChildRegistrationController::class, 'store'])->name('register.child.store');
+Route::get('/child-status/{uniqueCode}', [ChildRegistrationController::class, 'participantDetails'])->name('participant.details');
 Route::get('/register/success', function () {
     return view('public.register-success');
 })->name('register.success');
 
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/participants', [ParticipantController::class, 'index'])->name('participants');
-    Route::get('/participants/{id}', [ParticipantController::class, 'show'])->name('participants.show');
-    Route::delete('/participants/{id}', [ParticipantController::class, 'destroy'])->name('participants.destroy');
+    Route::get('/participants/{id}', [ParticipantController::class, 'participantDetails'])->name('participants.details');
+    Route::get('/participants/move/{id}', [ParticipantController::class, 'moveParticipants'])->name('participants.move');
+    Route::delete('/participants/{id}', [ParticipantController::class, 'destroy'])->name('participants.delete');
 
     Route::get('/broadcast', [MailBroadcastController::class, 'index'])->name('broadcast');
     Route::post('/broadcast', [MailBroadcastController::class, 'send'])->name('broadcast.send');

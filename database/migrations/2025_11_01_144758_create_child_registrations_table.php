@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('parent_email');
             $table->enum('lga', ['Jos North', 'Jos South']);
             $table->enum('interest_area', ['Quiz', 'Bible Recitation']);
-            $table->enum('stage', ['Initial', 'First Stage', 'Semi Final', 'Final'])->default('Initial');
+            $table->enum('stage', ['Initial', 'First Stage', 'Semi Final', 'Final', 'Winner'])->default('Initial');
             $table->timestamps();
         });
     }

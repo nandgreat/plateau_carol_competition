@@ -163,4 +163,17 @@ class ChildRegistrationController extends Controller
 
         return $code;
     }
+
+        public function participantDetails($uniqueCode)
+    {
+        $participant = ChildRegistration::where('unique_code',$uniqueCode)->first();
+        $nextStage = "";
+        if ($participant) {
+            $nextStage = $participant->stage == "Initial" ? "First Stage" : ($participant->stage == "First Stage" ? "Semi Final" : ($participant->stage == "Semi Final" ? "Final" : ""));
+        }
+
+        return view('public.participant-details', compact(
+            'participant',
+        ));
+    }
 }

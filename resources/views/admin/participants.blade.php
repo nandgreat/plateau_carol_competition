@@ -12,10 +12,12 @@
                 <input type="text" placeholder="Search participants..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 w-full md:w-64">
                 <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
             </div>
-            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                <i class="fas fa-download"></i>
-                <span class="hidden md:inline">Export</span>
-            </button>
+            <a href="{{ route('admin.participants.download-list-pdf') }}"
+                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                target="_blank">
+                <i class="fas fa-file-pdf"></i>
+                <span class="hidden md:inline">Download List PDF</span>
+            </a>
         </div>
     </div>
 </div>
@@ -134,10 +136,19 @@
                     </td>
                     <td class="py-4 px-4">
                         <div class="flex justify-center space-x-2">
-                          
+
                             <a href="{{ route('admin.participants.details', $child->id) }}" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                                 <i class="fas fa-eye"></i>
                                 <span class="hidden md:inline">View</span>
+                            </a>
+
+                            <a href="{{ route('admin.participants.download-pdf', $child->id) }}"
+                                class="bg-blue-600 hover:bg-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors text-white"
+                                title="Download PDF"
+                                target="_blank">
+                                <i class="fas fa-file-pdf"></i>
+                                <span class="hidden md:inline">Download</span>
+
                             </a>
 
                         </div>

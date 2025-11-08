@@ -7,6 +7,7 @@ use App\Models\Child;
 use App\Models\ChildRegistration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ParticipantController extends Controller
 {
@@ -57,6 +58,62 @@ class ParticipantController extends Controller
             $participant->save();
             return redirect()->back()->with('success', "Participant Successfully moved to $nextStage");
         }
+    }
+
+    public function downloadPdf($id)
+    {
+        $participant = ChildRegistration::findOrFail($id);
+        $urlImage = asset('public/'.$participant->child_image_path);
+
+        $imageData = base64_encode(file_get_contents($urlImage));
+        $image = 'data:image/jpeg;base64,' . $imageData;
+
+        // Generate PDF
+        $pdf = PDF::loadView('pdf.participant-profile', compact('participant', 'image'));
+
+        // Set paper size and orientation
+        $pdf->setPaper('A4', 'portrait');
+
+        // Download PDF with filename
+        $filename = "participant-profile-{$participant->unique_code}-" . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+     public function downloadListPdf()
+    {
+        // Get all participants with pagination for large datasets
+        $participants = ChildRegistration::latest()->get();
+        
+        $stats = [
+            'total' => $participants->count(),
+            'male' => $participants->where('gender', 'Male')->count(),
+            'female' => $participants->where('gender', 'Female')->count(),
+            'average_age' => number_format($participants->avg('age'), 1),
+        ];
+        
+        // Generate PDF
+        $pdf = PDF::loadView('pdf.participant-list', compact('participants', 'stats'));
+        
+        // Set paper size to landscape for better table display
+        $pdf->setPaper('A4', 'landscape');
+        
+        // Set options
+        $pdf->setOptions([
+            'defaultFont' => 'dejavu sans',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'isPhpEnabled' => true,
+            'margin_top' => 10,
+            'margin_right' => 10,
+            'margin_bottom' => 10,
+            'margin_left' => 10,
+        ]);
+        
+        // Download PDF with filename
+        $filename = "participants-list-" . now()->format('Y-m-d') . '.pdf';
+        
+        return $pdf->download($filename);
     }
 
     public function destroy($id)

@@ -39,6 +39,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::get('/participants/{id}', [ParticipantController::class, 'participantDetails'])->name('participants.details');
     Route::get('/participants/move/{id}', [ParticipantController::class, 'moveParticipants'])->name('participants.move');
     Route::delete('/participants/{id}', [ParticipantController::class, 'destroy'])->name('participants.delete');
+    Route::get('/participants-download', [ParticipantController::class, 'downloadListPdf'])->name('participants.download-list-pdf');
+
+    Route::get('/participants/{id}/download-pdf', [ParticipantController::class, 'downloadPdf'])->name('participants.download-pdf');
 
     Route::get('/broadcast', [MailBroadcastController::class, 'index'])->name('broadcast');
     Route::post('/broadcast', [MailBroadcastController::class, 'send'])->name('broadcast.send');

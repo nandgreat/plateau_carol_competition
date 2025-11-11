@@ -40,7 +40,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::get('/participants/move/{id}', [ParticipantController::class, 'moveParticipants'])->name('participants.move');
     Route::delete('/participants/{id}', [ParticipantController::class, 'destroy'])->name('participants.delete');
     Route::get('/participants-download', [ParticipantController::class, 'downloadListPdf'])->name('participants.download-list-pdf');
-
+    Route::post('/participants/search', [ParticipantController::class, 'search'])->name('participants.search');
     Route::get('/participants/{id}/download-pdf', [ParticipantController::class, 'downloadPdf'])->name('participants.download-pdf');
 
     Route::get('/broadcast', [MailBroadcastController::class, 'index'])->name('broadcast');
@@ -54,6 +54,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::post('/broadcast/send', [PortalController::class, 'sendBroadcast'])->name('broadcast.send');
     Route::get('/participants/delete/{id}', [PortalController::class, 'deleteParticipant'])->name('participants.delete');
 });
+
+
 
 
 // Admin routes (protected)

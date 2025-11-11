@@ -8,6 +8,7 @@ use App\Models\ChildRegistration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 
 class ParticipantController extends Controller
 {
@@ -63,7 +64,7 @@ class ParticipantController extends Controller
     public function downloadPdf($id)
     {
         $participant = ChildRegistration::findOrFail($id);
-        $urlImage = asset('public/'.$participant->child_image_path);
+        $urlImage = asset('public/' . $participant->child_image_path);
 
         $imageData = base64_encode(file_get_contents($urlImage));
         $image = 'data:image/jpeg;base64,' . $imageData;
@@ -80,24 +81,24 @@ class ParticipantController extends Controller
         return $pdf->download($filename);
     }
 
-     public function downloadListPdf()
+    public function downloadListPdf()
     {
         // Get all participants with pagination for large datasets
         $participants = ChildRegistration::latest()->get();
-        
+
         $stats = [
             'total' => $participants->count(),
             'male' => $participants->where('gender', 'Male')->count(),
             'female' => $participants->where('gender', 'Female')->count(),
             'average_age' => number_format($participants->avg('age'), 1),
         ];
-        
+
         // Generate PDF
         $pdf = PDF::loadView('pdf.participant-list', compact('participants', 'stats'));
-        
+
         // Set paper size to landscape for better table display
         $pdf->setPaper('A4', 'landscape');
-        
+
         // Set options
         $pdf->setOptions([
             'defaultFont' => 'dejavu sans',
@@ -109,11 +110,48 @@ class ParticipantController extends Controller
             'margin_bottom' => 10,
             'margin_left' => 10,
         ]);
-        
+
         // Download PDF with filename
         $filename = "participants-list-" . now()->format('Y-m-d') . '.pdf';
-        
+
         return $pdf->download($filename);
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $searchTerm = $request->input('search');
+
+        $participants = ChildRegistration::query()
+            ->where(function ($query) use ($searchTerm) {
+                $query->where('fullname', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('unique_code', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('organization', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('parent_name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('parent_phone', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('lga', 'LIKE', "%{$searchTerm}%");
+            })
+            ->get();
+
+        // Calculate stats for search results
+        $maleCount = $participants->where('gender', 'male')->count();
+        $femaleCount = $participants->where('gender', 'female')->count();
+        $averageAge = $participants->avg('age') ? number_format($participants->avg('age'), 1) : '0.0';
+
+        $stats = [
+            'total' => $participants->count(),
+            'maleCount' => $maleCount,
+            'femaleCount' => $femaleCount,
+            'averageAge' => $averageAge
+        ];
+
+        $html = view('admin.partials.participants-table-body', compact('participants'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $html,
+            'stats' => $stats,
+            'participants' => $participants
+        ]);
     }
 
     public function destroy($id)

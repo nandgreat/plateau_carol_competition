@@ -9,7 +9,7 @@
         </div>
         <div class="mt-4 md:mt-0 flex items-center space-x-3">
             <div class="relative">
-                <input type="text" placeholder="Search participants..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 w-full md:w-64">
+                <input type="text" id="searchInput" placeholder="Search participants..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 w-full md:w-64">
                 <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
             </div>
             <a href="{{ route('admin.participants.download-list-pdf') }}"
@@ -23,7 +23,7 @@
 </div>
 
 <!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" id="statsCards">
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="flex items-center">
             <div class="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center mr-4">
@@ -73,6 +73,14 @@
     </div>
 </div>
 
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto"></div>
+        <p class="text-white text-center mt-4">Searching participants...</p>
+    </div>
+</div>
+
 <!-- Participants Table -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="overflow-x-auto">
@@ -92,75 +100,20 @@
                     <th class="py-4 px-4 text-center font-semibold text-sm uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
-                @foreach($participants as $child)
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="py-4 px-4">
-                        <div class="flex items-center">
-                            <div class="h-10 w-10 flex-shrink-0 mr-3">
-                                <img src="{{ asset($child->child_image_path) }}" alt="{{ $child->fullname }}"
-                                    class="h-10 w-10 rounded-full object-cover border border-gray-300"
-                                    onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($child->fullname) }}&background=random'">
-                            </div>
-                            <div>
-                                <div class="font-medium text-gray-900">{{ $child->fullname }}</div>
-                                <div class="text-xs text-gray-500 truncate max-w-xs">{{ $child->unique_code }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-4 px-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {{ $child->age }} years
-                        </span>
-                    </td>
-                    <td class="py-4 px-4">
-                        @if(strtolower($child->gender) == 'male')
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            <i class="fas fa-mars mr-1"></i> Male
-                        </span>
-                        @else
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
-                            <i class="fas fa-venus mr-1"></i> Female
-                        </span>
-                        @endif
-                    </td>
-                    <td class="py-4 px-4">
-                        <span class="text-gray-700">{{ $child->organization ?? 'Not specified' }}</span>
-                    </td>
-                    <td class="py-4 px-4">
-                        <div class="font-medium text-gray-900">{{ $child->parent_name }}</div>
-                        <div class="text-xs text-gray-500">{{ $child->parent_phone ?? 'No phone' }}</div>
-                    </td>
-                    <td class="py-4 px-4">
-                        <span class="text-gray-700">{{ $child->lga ?? 'Not specified' }}</span>
-                    </td>
-                    <td class="py-4 px-4">
-                        <div class="flex justify-center space-x-2">
-
-                            <a href="{{ route('admin.participants.details', $child->id) }}" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                                <i class="fas fa-eye"></i>
-                                <span class="hidden md:inline">View</span>
-                            </a>
-
-                            <a href="{{ route('admin.participants.download-pdf', $child->id) }}"
-                                class="bg-blue-600 hover:bg-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-colors text-white"
-                                title="Download PDF"
-                                target="_blank">
-                                <i class="fas fa-file-pdf"></i>
-                                <span class="hidden md:inline">Download</span>
-
-                            </a>
-
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
+            <tbody class="divide-y divide-gray-200" id="participantsTableBody">
+                @include('admin.partials.participants-table-body', ['participants' => $participants])
             </tbody>
         </table>
     </div>
 
+    <div id="noResults" class="hidden text-center py-12">
+        <i class="fas fa-search text-gray-300 text-5xl mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-1">No participants found</h3>
+        <p class="text-gray-500 max-w-md mx-auto">No participants match your search criteria. Try different keywords.</p>
+    </div>
+
     @if($participants->isEmpty())
-    <div class="text-center py-12">
+    <div class="text-center py-12" id="emptyState">
         <i class="fas fa-users text-gray-300 text-5xl mb-4"></i>
         <h3 class="text-lg font-medium text-gray-900 mb-1">No participants found</h3>
         <p class="text-gray-500 max-w-md mx-auto">There are no registered participants yet. When participants register, they will appear here.</p>
@@ -169,8 +122,8 @@
 </div>
 
 <!-- Pagination -->
-@if($participants->hasPages())
-<div class="mt-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+<div id="paginationSection" class="mt-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+    @if($participants->hasPages())
     <div class="text-sm text-gray-700">
         Showing <span class="font-medium">{{ $participants->firstItem() }}</span> to
         <span class="font-medium">{{ $participants->lastItem() }}</span> of
@@ -179,8 +132,8 @@
     <div class="bg-white px-4 py-3 rounded-lg shadow-sm border border-gray-200">
         {{ $participants->links() }}
     </div>
+    @endif
 </div>
-@endif
 
 <!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
@@ -209,6 +162,7 @@
 
 <script>
     let deleteUrl = '';
+    let searchTimeout;
 
     function confirmDelete(url) {
         deleteUrl = url;
@@ -236,6 +190,108 @@
         if (event.key === 'Escape') {
             document.getElementById('deleteModal').classList.add('hidden');
         }
+    });
+
+    // AJAX Search Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('participantsTableBody');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const noResults = document.getElementById('noResults');
+        const emptyState = document.getElementById('emptyState');
+        const paginationSection = document.getElementById('paginationSection');
+        const statsCards = document.getElementById('statsCards');
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const searchTerm = this.value.trim();
+
+            // Show loading spinner for searches with terms
+            if (searchTerm.length > 0) {
+                loadingSpinner.classList.remove('hidden');
+            }
+
+            searchTimeout = setTimeout(function() {
+                performSearch(searchTerm);
+            }, 500); // 500ms delay
+        });
+
+        function performSearch(searchTerm) {
+            if (searchTerm.length === 0) {
+                // If search is empty, reload the page to show all participants
+                window.location.reload();
+                return;
+            }
+
+            fetch('{{ route("admin.participants.search") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    search: searchTerm
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingSpinner.classList.add('hidden');
+
+                if (data.success) {
+                    // Update table body
+                    tableBody.innerHTML = data.html;
+
+                    // Update stats cards
+                    if (data.stats) {
+                        updateStatsCards(data.stats);
+                    }
+
+                    // Show/hide no results message
+                    if (data.participants.length === 0) {
+                        noResults.classList.remove('hidden');
+                        tableBody.classList.add('hidden');
+                        paginationSection.classList.add('hidden');
+                        if (emptyState) emptyState.classList.add('hidden');
+                    } else {
+                        noResults.classList.add('hidden');
+                        tableBody.classList.remove('hidden');
+                        // Hide pagination for search results
+                        paginationSection.classList.add('hidden');
+                        if (emptyState) emptyState.classList.add('hidden');
+                    }
+                } else {
+                    console.error('Search failed:', data.message);
+                    // Fallback: reload the page
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                loadingSpinner.classList.add('hidden');
+                // Fallback: reload the page on error
+                window.location.reload();
+            });
+        }
+
+        function updateStatsCards(stats) {
+            const totalCard = statsCards.querySelector('.bg-white:nth-child(1) h3');
+            const maleCard = statsCards.querySelector('.bg-white:nth-child(2) h3');
+            const femaleCard = statsCards.querySelector('.bg-white:nth-child(3) h3');
+            const ageCard = statsCards.querySelector('.bg-white:nth-child(4) h3');
+
+            if (totalCard) totalCard.textContent = stats.total;
+            if (maleCard) maleCard.textContent = stats.maleCount;
+            if (femaleCard) femaleCard.textContent = stats.femaleCount;
+            if (ageCard) ageCard.textContent = stats.averageAge;
+        }
+
+        // Allow pressing Enter to search immediately
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                performSearch(this.value.trim());
+            }
+        });
     });
 </script>
 @endsection
